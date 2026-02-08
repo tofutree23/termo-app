@@ -42,7 +42,7 @@ dependencies:
   dartssh2: ^2.9.0
 
   # Terminal emulator
-  xterm: ^3.2.6
+  xterm: ^4.0.0
 
   # Secure storage for passwords
   flutter_secure_storage: ^9.0.0

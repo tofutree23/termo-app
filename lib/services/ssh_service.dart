@@ -17,13 +17,16 @@ class SSHService {
   }) async {
     final socket = await SSHSocket.connect(host.hostname, host.port);
 
+    List<SSHKeyPair>? identities;
+    if (privateKey != null) {
+      identities = SSHKeyPair.fromPem(privateKey);
+    }
+
     _client = SSHClient(
       socket,
       username: host.username,
       onPasswordRequest: password != null ? () => password : null,
-      identities: privateKey != null
-          ? [SSHKeyPair.fromPem(privateKey)]
-          : null,
+      identities: identities,
     );
 
     _session = await _client!.shell(
