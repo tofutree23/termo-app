@@ -1,4 +1,5 @@
 // lib/screens/terminal_screen.dart
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:xterm/xterm.dart';
@@ -49,19 +50,21 @@ class _TerminalScreenState extends State<TerminalScreen> {
     try {
       await terminalProvider.connect(widget.host, password: password);
 
-      terminalProvider.sshService.stdout?.listen((data) {
-        _terminal.write(String.fromCharCodes(data));
+      terminalProvider.sshService.stdout?.cast<List<int>>().transform(utf8.decoder).listen((data) {
+        _terminal.write(data);
       });
 
-      terminalProvider.sshService.stderr?.listen((data) {
-        _terminal.write(String.fromCharCodes(data));
+      terminalProvider.sshService.stderr?.cast<List<int>>().transform(utf8.decoder).listen((data) {
+        _terminal.write(data);
       });
 
       _terminal.onOutput = (data) {
         terminalProvider.sshService.write(data);
       };
-    } catch (e) {
-      setState(() => _error = e.toString());
+    } catch (e, stackTrace) {
+      debugPrint('SSH connection error: $e');
+      debugPrint('Stack trace: $stackTrace');
+      setState(() => _error = '$e');
     }
   }
 
@@ -122,21 +125,28 @@ class _TerminalScreenState extends State<TerminalScreen> {
       ),
       body: _error != null
           ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                  const SizedBox(height: 16),
-                  Text('Connection failed: $_error'),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      setState(() => _error = null);
-                      _connect();
-                    },
-                    child: const Text('Retry'),
-                  ),
-                ],
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                    const SizedBox(height: 16),
+                    SelectableText(
+                      'Connection failed:\n$_error',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () {
+                        setState(() => _error = null);
+                        _connect();
+                      },
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
               ),
             )
           : terminalProvider.isConnecting
@@ -147,6 +157,8 @@ class _TerminalScreenState extends State<TerminalScreen> {
                       child: TerminalView(
                         _terminal,
                         controller: _terminalController,
+                        keyboardType: TextInputType.text,
+                        deleteDetection: true,
                         textStyle: TerminalStyle(
                           fontSize: settingsProvider.fontSize,
                         ),

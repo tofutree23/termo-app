@@ -1,5 +1,6 @@
 // lib/services/ssh_service.dart
 import 'dart:async';
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:dartssh2/dartssh2.dart';
 import '../models/host.dart';
@@ -15,7 +16,11 @@ class SSHService {
     String? password,
     String? privateKey,
   }) async {
-    final socket = await SSHSocket.connect(host.hostname, host.port);
+    final socket = await SSHSocket.connect(
+      host.hostname,
+      host.port,
+      timeout: const Duration(seconds: 10),
+    );
 
     List<SSHKeyPair>? identities;
     if (privateKey != null) {
@@ -41,7 +46,7 @@ class SSHService {
   Stream<Uint8List>? get stderr => _session?.stderr;
 
   void write(String data) {
-    _session?.write(Uint8List.fromList(data.codeUnits));
+    _session?.write(Uint8List.fromList(utf8.encode(data)));
   }
 
   void resize(int width, int height) {

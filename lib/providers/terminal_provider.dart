@@ -6,7 +6,8 @@ class TerminalProvider extends ChangeNotifier {
   final SSHService _sshService = SSHService();
   Host? _currentHost;
   bool _isConnecting = false;
-  bool _isInputModeEnabled = false;
+  bool _isInputModeEnabled = true;
+  bool _isLiveInputMode = false;
   List<String> _commandHistory = [];
   int _historyIndex = -1;
 
@@ -14,11 +15,17 @@ class TerminalProvider extends ChangeNotifier {
   bool get isConnected => _sshService.isConnected;
   bool get isConnecting => _isConnecting;
   bool get isInputModeEnabled => _isInputModeEnabled;
+  bool get isLiveInputMode => _isLiveInputMode;
   List<String> get commandHistory => _commandHistory;
   SSHService get sshService => _sshService;
 
   void toggleInputMode() {
     _isInputModeEnabled = !_isInputModeEnabled;
+    notifyListeners();
+  }
+
+  void toggleLiveInputMode() {
+    _isLiveInputMode = !_isLiveInputMode;
     notifyListeners();
   }
 
@@ -37,6 +44,10 @@ class TerminalProvider extends ChangeNotifier {
       _isConnecting = false;
       notifyListeners();
     }
+  }
+
+  void writeRaw(String text) {
+    _sshService.write(text);
   }
 
   void sendCommand(String command) {
